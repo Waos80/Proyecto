@@ -1,8 +1,10 @@
 package org.example.index;
 
 import org.example.contact.Contact;
+import org.example.contact.ContactManager;
 import org.example.file.txt.TXTWriter;
 
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -48,11 +50,36 @@ public class Indexer {
         return null;
     }
 
-    private BSTree<Contact> getBSTree(Field field) throws IllegalAccessException {
+    private Comparator<Contact> getComparator(String fieldName) {
+        switch (fieldName) {
+            case "name" -> {
+                return Comparator.comparing(o -> o.name);
+            }
+            case "lastName" -> {
+                return Comparator.comparing(o -> o.lastName);
+            }
+            case "username" -> {
+                return Comparator.comparing(o -> o.username);
+            }
+            case "phoneNumber" -> {
+                return Comparator.comparing(o -> o.phoneNumber);
+            }
+            case "email" -> {
+                return Comparator.comparing(o -> o.email);
+            }
+            case "address" -> {
+                return Comparator.comparing(o -> o.address);
+            }
+        }
+
+        return null;
+    }
+
+    private BSTree<Contact> GetBSTree(Field field) throws IllegalAccessException {
         return new BSTree<>(getComparator(field));
     }
 
-    private AVLTree<Contact> getAVLTree(Field field) throws IllegalAccessException {
+    private AVLTree<Contact> GetAVLTree(Field field) throws IllegalAccessException {
         return new AVLTree<>(getComparator(field));
     }
 
@@ -60,12 +87,20 @@ public class Indexer {
         this.bst_map = new HashMap<>();
         this.avl_map = new HashMap<>();
         for (Field field : Contact.class.getFields()) {
-            this.avl_map.put(field, getAVLTree(field));
-            this.bst_map.put(field, getBSTree(field));
+            this.avl_map.put(field, GetAVLTree(field));
+            this.bst_map.put(field, GetBSTree(field));
         }
     }
 
-    public void storeIndexOf(Field field, ArrayList<Contact> contacts) {
+    public AVLTree<Contact> GetAVL(Field field) {
+        return avl_map.get(field);
+    }
+
+    public BSTree<Contact> GetBST(Field field) {
+        return bst_map.get(field);
+    }
+
+    public void StoreIndexOf(Field field, ArrayList<Contact> contacts) {
         BSTree<Contact> bst = bst_map.get(field);
         if (bst == null) {
             return;
@@ -126,5 +161,52 @@ public class Indexer {
         }
     }
 
+    public boolean Import(String path, ContactManager manager) {
+        File file = new File(path);
+        String[] name = file.getName().split("-");
+        String treeType = name[1].split("\\.")[0];
 
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(path));
+
+        } catch (FileNotFoundException e) {
+            return false;
+        }
+        String[] idxs = null;
+        try {
+            idxs = reader.readLine().split(",");
+        } catch (IOException e) {
+            return false;
+        }
+
+        if (treeType.equals("avl")) {
+                AVLTree<Contact> tree = new AVLTree<>(getComparator(name[0]));
+                for (String idx : idxs) {
+                    if (!idx.equals("null")) {
+                        tree.insert(manager.GetContact(Integer.parseInt(idx)));
+                    }
+                }
+            try {
+                avl_map.put(Contact.class.getField(name[0]), tree);
+            } catch (NoSuchFieldException e) {
+                return false;
+            }
+            return true;
+            } else if (treeType.equals("bst")) {
+                BSTree<Contact> tree = new BSTree<>(getComparator(name[0]));
+                for (String idx : idxs) {
+                    if (!idx.equals("null")) {
+                        tree.insert(manager.GetContact(Integer.parseInt(idx)));
+                    }
+                }
+                try {
+                    bst_map.put(Contact.class.getField(name[0]), tree);
+                } catch (NoSuchFieldException e) {
+                    return false;
+                }
+                return true;
+            }
+        return false;
+    }
 }

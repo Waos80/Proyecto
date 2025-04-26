@@ -120,6 +120,9 @@ public class AVLTree<T> implements Tree<T> {
     }
 
     public void insert(T val) {
+        if (val == null) {
+            return;
+        }
         root = insertToTree(root, val);
         root = balanceTree(root);
     }

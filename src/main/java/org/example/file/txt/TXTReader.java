@@ -1,5 +1,4 @@
 package org.example.file.txt;
-
 import java.io.BufferedReader;
 
 public class TXTReader {
@@ -10,4 +9,5 @@ public class TXTReader {
         this.path = path;
         this.reader = null;
     }
+
 }

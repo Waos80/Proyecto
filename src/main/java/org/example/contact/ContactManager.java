@@ -3,6 +3,7 @@ package org.example.contact;
 import org.example.file.csv.CSVReader;
 import org.example.file.csv.CSVWriter;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
@@ -113,6 +114,11 @@ public class ContactManager {
         return false;
     }
 
+    public boolean SearchContactByField(int fieldIdx) {
+
+        return true;
+    }
+
     public boolean SearchContact(Contact contact) {
         for (Contact c : contacts) {
             if (c.name.equals(contact.name) &&
@@ -129,6 +135,17 @@ public class ContactManager {
         return false;
     }
 
+    /*
+        Función que actualize la información de un contacto, donde:
+        - Se toma el indice y se encuentra el contacto
+        - Se solicitan todos los datos de nuevo tal que si se crease un nuevo contacto-
+        - Se almacena una copia de los contenidos del archivo de contactos en líneas,
+          donde cada una equivale a la información de un contacto.
+        - Se busca en qué linea los indices coinciden.
+        - Se reemplaza la linea de coincidencia con la nueva información.
+        - Se reescriben los contenidos al archivo.
+        Se retorna false en caso que no se encuentre el contacto a actualizar
+    */
     public boolean UpdateContact(int id, Contact newContact) {
         for (int i = 0; i < contacts.size(); i++) {
             Contact contact = contacts.get(i);
@@ -142,26 +159,26 @@ public class ContactManager {
         return false;
     }
 
+    /*     Función que importa los contactos de un archivo csv.
+           - Se leen los contenidos del archivo y se registra cada contacto al archivo principal.
+           - Si la información de uno de los contactos ya se encuentra en el archivo de contactos,
+             no se agrega y pasa al siguiente contacto.
+     */
     public boolean ImportContacts(final String path) {
-        ArrayList<Contact> importContacts;
+        ArrayList<String> importContents;
         CSVReader importReader = new CSVReader(path);
-        importContacts = importReader.GetContacts();
-        if (importContacts == null) {
-            return false;
-        }
-
-        for (Contact contact : importContacts) {
-            if (!CreateContact(
-                    contact.name,
-                    contact.username,
-                    contact.email,
-                    contact.lastName,
-                    contact.address,
-                    contact.phoneNumber,
-                    contact.birthDate
-            )) {
-                return false;
-            }
+        importContents = importReader.GetFileContents();
+        for (String line : importContents) {
+            String[] fields = line.split(",");
+            CreateContact(
+                    fields[1],
+                    fields[3],
+                    fields[5],
+                    fields[2],
+                    fields[6],
+                    fields[4],
+                    LocalDate.ofEpochDay(Long.parseLong(fields[7]))
+            );
         }
         return true;
     }

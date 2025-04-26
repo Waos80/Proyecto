@@ -6,6 +6,7 @@ import org.example.index.Indexer;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 
@@ -55,18 +56,21 @@ public class Application {
         while (year <= 0) {
             System.out.println("Ingrese el año de nacimiento del contacto:");
             year = scanner.nextInt();
+            scanner.nextLine();
         }
 
         int month = 0;
         while (1 > month || month > 12) {
             System.out.println("Ingrese el mes de nacimiento del contacto:");
             month = scanner.nextInt();
+            scanner.nextLine();
         }
 
         int day = 0;
         while (1 > day || day > 31) {
             System.out.println("Ingrese el día de nacimiento del contacto:");
             day = scanner.nextInt();
+            scanner.nextLine();
         }
 
         boolean success = manager.CreateContact(
@@ -92,6 +96,7 @@ public class Application {
         boolean success = false;
         System.out.println("Ingrese el id del contacto a eliminar:");
         id = scanner.nextInt();
+        scanner.nextLine();
         success = manager.DeleteContact(id);
         if (!success) {
             System.out.println("El id ingresado no corresponde a un contacto, inténtelo de nuevo");
@@ -102,6 +107,7 @@ public class Application {
         int id;
         System.out.println("Ingrese el id del contacto: ");
         id = scanner.nextInt();
+        scanner.nextLine();
 
         if (!manager.SearchContact(id)) {
             System.out.println("El id ingresado no corresponde a un contacto, inténtelo de nuevo");
@@ -166,15 +172,133 @@ public class Application {
             return;
         }
 
-        int idx;
-        System.out.println("Ingrese el id del contacto que desea buscar: ");
-        idx = scanner.nextInt();
-        Contact result = manager.GetContact(idx);
-        if (result == null) {
-            System.out.println("El contacto con el id '" + idx + "' no existe");
+        System.out.println("Seleccione un campo por el que desee buscar el contacto:\n" +
+                "1. ID\n" +
+                "2. Nombre\n" +
+                "3. Nombre de usuario\n" +
+                "4. Correo\n" +
+                "5. Apellido\n" +
+                "6. Dirección\n" +
+                "7. Número de teléfono\n" +
+                "8. Fecha de nacimiento");
+
+        int option = scanner.nextInt();
+        scanner.nextLine();
+        if (option < 1 || option > 7) {
+            System.out.println("El campo seleccionado no existe");
+            return;
         }
-        else {
-            PrintContact(result);
+
+        ArrayList<Contact> contacts = manager.GetContacts();
+        Contact res = null;
+        switch (option) {
+            case 1:
+                System.out.println("Ingrese el id del contacto que desea buscar: ");
+                int id = scanner.nextInt();
+                scanner.nextLine();
+                for (Contact c : contacts) {
+                    if (c.id == id) {
+                        res = c;
+                        break;
+                    }
+                }
+
+                break;
+            case 2:
+                System.out.println("Ingrese el nombre del contacto que desea buscar: ");
+                String name = scanner.nextLine();
+                for (Contact c : contacts) {
+                    if (c.name.equals(name)) {
+                        res = c;
+                        break;
+                    }
+                }
+                break;
+            case 3:
+                System.out.println("Ingrese el nombre de usuario del contacto que desea buscar: ");
+                String userName = scanner.nextLine();
+                for (Contact c : contacts) {
+                    if (c.username.equals(userName)) {
+                        res = c;
+                        break;
+                    }
+                }
+                break;
+            case 4:
+                System.out.println("Ingrese el correo del contacto que desea buscar: ");
+                String email = scanner.nextLine();
+                for (Contact c : contacts) {
+                    if (c.email.equals(email)) {
+                        res = c;
+                        break;
+                    }
+                }
+                break;
+            case 5:
+                System.out.println("Ingrese el apellido del usuario del contacto que desea buscar: ");
+                String lastName = scanner.nextLine();
+                for (Contact c : contacts) {
+                    if (c.lastName.equals(lastName)) {
+                        res = c;
+                        break;
+                    }
+                }
+                break;
+            case 6:
+                System.out.println("Ingrese la dirección del contacto que desea buscar: ");
+                String address = scanner.nextLine();
+                for (Contact c : contacts) {
+                    if (c.address.equals(address)) {
+                        res = c;
+                        break;
+                    }
+                }
+                break;
+            case 7:
+                System.out.println("Ingrese el número de teléfono del contacto que desea buscar: ");
+                String phoneNumber = scanner.nextLine();
+                for (Contact c : contacts) {
+                    if (c.phoneNumber.equals(phoneNumber)) {
+                        res = c;
+                        break;
+                    }
+                }
+                break;
+            case 8:
+                int year = 0;
+                while (year <= 0) {
+                    System.out.println("Ingrese el año de nacimiento del contacto:");
+                    year = scanner.nextInt();
+                    scanner.nextLine();
+                }
+
+                int month = 0;
+                while (1 > month || month > 12) {
+                    System.out.println("Ingrese el mes de nacimiento del contacto:");
+                    month = scanner.nextInt();
+                    scanner.nextLine();
+                }
+
+                int day = 0;
+                while (1 > day || day > 31) {
+                    System.out.println("Ingrese el día de nacimiento del contacto:");
+                    day = scanner.nextInt();
+                    scanner.nextLine();
+                }
+                LocalDate date = LocalDate.of(year, month, day);
+                for (Contact c : contacts) {
+                    if (c.birthDate == date) {
+                        res = c;
+                        break;
+                    }
+                }
+                break;
+        }
+
+        if (res == null) {
+            System.out.println("El contacto buscado no existe");
+        } else {
+            PrintContact(res);
         }
     }
 
@@ -188,10 +312,11 @@ public class Application {
                 "6. Número de teléfono\n");
 
         int option = scanner.nextInt();
+        scanner.nextLine();
         if (option < 1 || option > 7) {
             System.out.println("El campo seleccionado no existe");
         } else {
-            indexer.storeIndexOf(Contact.class.getFields()[option], manager.GetContacts());
+            indexer.StoreIndexOf(Contact.class.getFields()[option], manager.GetContacts());
             System.out.println("El indice ha sido creado");
         }
     }
@@ -231,6 +356,16 @@ public class Application {
         }
     }
 
+    private void ImportIndex() {
+        System.out.println("Indique la dirección donde se encuentra el archivo .txt a importar:");
+        String path = scanner.nextLine();
+        if (!indexer.Import(path, manager)) {
+            System.out.println("Ocurrió un error al intentar importar el índice");
+            return;
+        }
+        System.out.println("El indice ha sido importado");
+    }
+
     public Application() throws IllegalAccessException {
         this.scanner = new Scanner(System.in);
         this.manager = new ContactManager();
@@ -249,39 +384,45 @@ public class Application {
                     "5. Crear un índice\n" +
                     "6. Visualizar contactos\n" +
                     "7. Importar contactos\n" +
-                    "8. Salir");
+                    "8. Importar indice\n" +
+                    "9. Salir");
             int option = scanner.nextInt();
-
-            switch (option) {
-                case 1:
-                    AddContact();
-                    break;
-                case 2:
-                    DeleteContact();
-                    break;
-                case 3:
-                    UpdateContact();
-                    break;
-                case 4:
-                    SearchContact();
-                    break;
-                case 5:
-                    CreateIndex();
-                    break;
-                case 6:
-                    PrintContacts();
-                    break;
-                case 7:
-                    ImportContacts();
-                    break;
-                case 8:
-                    exit = true;
-                    break;
-                default:
-                    break;
+            scanner.nextLine();
+            try {
+                switch (option) {
+                    case 1:
+                        AddContact();
+                        break;
+                    case 2:
+                        DeleteContact();
+                        break;
+                    case 3:
+                        UpdateContact();
+                        break;
+                    case 4:
+                        SearchContact();
+                        break;
+                    case 5:
+                        CreateIndex();
+                        break;
+                    case 6:
+                        PrintContacts();
+                        break;
+                    case 7:
+                        ImportContacts();
+                        break;
+                    case 8:
+                        ImportIndex();
+                        break;
+                    case 9:
+                        exit = true;
+                        break;
+                    default:
+                        break;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("La información ingresada es incorrecta, intentelo de nuevo");
             }
         }
     }
-
-
 }

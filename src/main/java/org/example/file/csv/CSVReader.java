@@ -38,7 +38,7 @@ public class CSVReader {
             reader.close();
             return contents;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
