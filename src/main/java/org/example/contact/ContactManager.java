@@ -3,7 +3,6 @@ package org.example.contact;
 import org.example.file.csv.CSVReader;
 import org.example.file.csv.CSVWriter;
 
-import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
@@ -38,6 +37,7 @@ public class ContactManager {
 
         if (line >= 0) {
             contacts.remove(line);
+            this.contacts = contacts;
             writer.UpdateContacts(contacts);
             return true;
         }
@@ -48,15 +48,19 @@ public class ContactManager {
     private void UpdateContactList() {
         contacts = reader.GetContacts();
         if (contacts.isEmpty()) {
-            id_count = 0;
+            id_count = 1;
         }
         else {
-            id_count = contacts.getLast().id;
+            for (Contact contact : contacts) {
+                if (id_count < contact.id) {
+                    id_count = contact.id;
+                }
+            }
         }
     }
 
     public ContactManager() {
-        id_count = 0;
+        id_count = 1;
         this.reader = new CSVReader("./contacts.csv");
         this.writer = new CSVWriter("./contacts.csv");
         this.contacts = new ArrayList<>();
@@ -76,7 +80,7 @@ public class ContactManager {
         Contact contact = new Contact(id_count);
         contact.name = name;
         contact.username = username;
-        contact.email = email;
+        contact.email = email.toLowerCase();
         contact.lastName = lastName;
         contact.address = address;
         contact.phoneNumber = phoneNumber;
@@ -85,19 +89,22 @@ public class ContactManager {
         return RegisterContact(contact);
     }
 
-    public boolean DeleteContact(int idx) {
-        if (idx < 0 || contacts.size() - 1 < idx) {
-            return false;
+    public boolean DeleteContact(int id) {
+        for (int i = 0; i < contacts.size(); i++) {
+            Contact contact = contacts.get(i);
+            if (contact.id == id) {
+                return UnregisterContact(id);
+            }
         }
 
-        return UnregisterContact(contacts.get(idx).id);
+        return false;
     }
 
     public Contact GetContact(int idx) {
-        if (idx > contacts.size() - 1 || idx < 0) {
+        if (idx > contacts.size() || idx < 1) {
             return null;
         }
-        return contacts.get(idx);
+        return contacts.get(idx - 1);
     }
 
     public ArrayList<Contact> GetContacts() {
@@ -114,9 +121,13 @@ public class ContactManager {
         return false;
     }
 
-    public boolean SearchContactByField(int fieldIdx) {
-
-        return true;
+    public Contact GetContactByID(int id) {
+        for (Contact contact : contacts) {
+            if (contact.id == id) {
+                return contact;
+            }
+        }
+        return null;
     }
 
     public boolean SearchContact(Contact contact) {
@@ -167,9 +178,21 @@ public class ContactManager {
     public boolean ImportContacts(final String path) {
         ArrayList<String> importContents;
         CSVReader importReader = new CSVReader(path);
+
         importContents = importReader.GetFileContents();
+        if (importContents == null) {
+            return false;
+        }
+
         for (String line : importContents) {
             String[] fields = line.split(",");
+            int start = 0;
+            for (char ch : fields[0].toCharArray()){
+                if (!Character.isDigit(ch)) {
+                    start++;
+                }
+            }
+            id_count = Integer.parseInt(fields[0].substring(start));
             CreateContact(
                     fields[1],
                     fields[3],

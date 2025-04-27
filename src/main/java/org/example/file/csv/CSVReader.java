@@ -19,7 +19,7 @@ public class CSVReader {
             contact.phoneNumber = fields[4];
             contact.email = fields[5];
             contact.address = fields[6];
-            contact.birthDate = LocalDate.ofEpochDay(Long.parseLong(fields[7]));
+            contact.birthDate = LocalDate.ofEpochDay(Long.parseLong(fields[7])/24/60);
             return contact;
         } catch (NumberFormatException e) {
             return null;

@@ -98,7 +98,9 @@ public class Application {
         id = scanner.nextInt();
         scanner.nextLine();
         success = manager.DeleteContact(id);
-        if (!success) {
+        if (success) {
+            System.out.println("El contacto #" + id + " ha sido eliminado");
+        } else {
             System.out.println("El id ingresado no corresponde a un contacto, inténtelo de nuevo");
         }
     }
@@ -150,13 +152,35 @@ public class Application {
             phoneNumber = scanner.nextLine();
         }
 
-        String birthDate = "";
-        while (birthDate.isEmpty()) {
-            System.out.println("Ingrese la fecha de nacimiento del contacto:");
-            birthDate = scanner.nextLine();
+        int year = 0;
+        while (year <= 0) {
+            System.out.println("Ingrese el año de nacimiento del contacto:");
+            year = scanner.nextInt();
+            scanner.nextLine();
+        }
+
+        int month = 0;
+        while (1 > month || month > 12) {
+            System.out.println("Ingrese el mes de nacimiento del contacto:");
+            month = scanner.nextInt();
+            scanner.nextLine();
+        }
+
+        int day = 0;
+        while (1 > day || day > 31) {
+            System.out.println("Ingrese el día de nacimiento del contacto:");
+            day = scanner.nextInt();
+            scanner.nextLine();
         }
 
         Contact contact = new Contact(-1);
+        contact.name = name;
+        contact.username = username;
+        contact.email = email;
+        contact.lastName = lastName;
+        contact.address = address;
+        contact.phoneNumber = phoneNumber;
+        contact.birthDate = LocalDate.of(year, month, day);
         if (!manager.UpdateContact(id, contact)) {
             System.out.println("El id ingresado no corresponde a un contacto, inténtelo de nuevo");
         }
@@ -304,19 +328,20 @@ public class Application {
 
     private void CreateIndex() {
         System.out.println("Seleccione un campo:\n" +
-                "1. Nombre\n" +
-                "2. Nombre de usuario\n" +
-                "3. Correo\n" +
-                "4. Apellido\n" +
-                "5. Dirección\n" +
-                "6. Número de teléfono\n");
+                "1. ID\n" +
+                "2. Nombre\n" +
+                "3. Apellido\n" +
+                "4. Nombre de usuario\n" +
+                "5. Número de teléfono\n" +
+                "6. Correo\n" +
+                "7. Dirección");
 
         int option = scanner.nextInt();
         scanner.nextLine();
         if (option < 1 || option > 7) {
             System.out.println("El campo seleccionado no existe");
         } else {
-            indexer.StoreIndexOf(Contact.class.getFields()[option], manager.GetContacts());
+            indexer.StoreIndexOf(Contact.class.getFields()[option - 1].getName(), manager.GetContacts());
             System.out.println("El indice ha sido creado");
         }
     }

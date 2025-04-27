@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Indexer {
-    private final Map<Field, AVLTree<Contact>> avl_map;
-    private final Map<Field, BSTree<Contact>> bst_map;
+    private final Map<String, AVLTree<Contact>> avl_map;
+    private final Map<String, BSTree<Contact>> bst_map;
 
     private Comparator<Contact> getComparator(Field field) {
         String fieldTypeName = field.getType().getTypeName();
@@ -21,29 +21,29 @@ public class Indexer {
             String fieldName = field.getName();
             switch (fieldName) {
                 case "name" -> {
-                    return Comparator.comparing(o -> o.name);
+                    return Comparator.comparing((Contact o) -> o.name);
                 }
                 case "lastName" -> {
-                    return Comparator.comparing(o -> o.lastName);
+                    return Comparator.comparing((Contact o) -> o.lastName);
                 }
                 case "username" -> {
-                    return Comparator.comparing(o -> o.username);
+                    return Comparator.comparing((Contact o) -> o.username);
                 }
                 case "phoneNumber" -> {
-                    return Comparator.comparing(o -> o.phoneNumber);
+                    return Comparator.comparing((Contact o) -> o.phoneNumber);
                 }
                 case "email" -> {
-                    return Comparator.comparing(o -> o.email);
+                    return Comparator.comparing((Contact o) -> o.email);
                 }
                 case "address" -> {
-                    return Comparator.comparing(o -> o.address);
+                    return Comparator.comparing((Contact o) -> o.address);
                 }
             }
         }
         else if (fieldTypeName.contains("int")){
             String fieldName = field.getName();
             if (fieldName.equals("id")) {
-                return Comparator.comparing(o -> o.id);
+                return Comparator.comparing((Contact o) -> o.id);
             }
         }
 
@@ -53,22 +53,22 @@ public class Indexer {
     private Comparator<Contact> getComparator(String fieldName) {
         switch (fieldName) {
             case "name" -> {
-                return Comparator.comparing(o -> o.name);
+                return Comparator.comparing((Contact o) -> o.name);
             }
             case "lastName" -> {
-                return Comparator.comparing(o -> o.lastName);
+                return Comparator.comparing((Contact o) -> o.lastName);
             }
             case "username" -> {
-                return Comparator.comparing(o -> o.username);
+                return Comparator.comparing((Contact o) -> o.username);
             }
             case "phoneNumber" -> {
-                return Comparator.comparing(o -> o.phoneNumber);
+                return Comparator.comparing((Contact o) -> o.phoneNumber);
             }
             case "email" -> {
-                return Comparator.comparing(o -> o.email);
+                return Comparator.comparing((Contact o) -> o.email);
             }
             case "address" -> {
-                return Comparator.comparing(o -> o.address);
+                return Comparator.comparing((Contact o) -> o.address);
             }
         }
 
@@ -87,21 +87,21 @@ public class Indexer {
         this.bst_map = new HashMap<>();
         this.avl_map = new HashMap<>();
         for (Field field : Contact.class.getFields()) {
-            this.avl_map.put(field, GetAVLTree(field));
-            this.bst_map.put(field, GetBSTree(field));
+            this.avl_map.put(field.getName(), GetAVLTree(field));
+            this.bst_map.put(field.getName(), GetBSTree(field));
         }
     }
 
-    public AVLTree<Contact> GetAVL(Field field) {
-        return avl_map.get(field);
+    public AVLTree<Contact> GetAVL(String fieldName) {
+        return avl_map.get(fieldName);
     }
 
-    public BSTree<Contact> GetBST(Field field) {
-        return bst_map.get(field);
+    public BSTree<Contact> GetBST(String fieldName) {
+        return bst_map.get(fieldName);
     }
 
-    public void StoreIndexOf(Field field, ArrayList<Contact> contacts) {
-        BSTree<Contact> bst = bst_map.get(field);
+    public void StoreIndexOf(String fieldName, ArrayList<Contact> contacts) {
+        BSTree<Contact> bst = bst_map.get(fieldName);
         if (bst == null) {
             return;
         }
@@ -111,7 +111,7 @@ public class Indexer {
         }
 
         ArrayList<ArrayList<Contact>> bst_bfs = bst.getBFS();
-        TXTWriter writer = new TXTWriter(field.getName() + "-bst.txt");
+        TXTWriter writer = new TXTWriter(fieldName + "-bst.txt");
         for (int i = 0; i < bst_bfs.size(); i++) {
             ArrayList<Contact> l = bst_bfs.get(i);
             int size = l.size();
@@ -130,7 +130,7 @@ public class Indexer {
             }
         }
 
-        AVLTree<Contact> avl = avl_map.get(field);
+        AVLTree<Contact> avl = avl_map.get(fieldName);
         if (avl == null) {
             return;
         }
@@ -140,7 +140,7 @@ public class Indexer {
         }
 
         ArrayList<ArrayList<Contact>> avl_bfs = avl.getBFS();
-        writer = new TXTWriter(field.getName() + "-avl.txt");
+        writer = new TXTWriter(fieldName + "-avl.txt");
 
         for (int i = 0; i < avl_bfs.size(); i++) {
             ArrayList<Contact> l = avl_bfs.get(i);
@@ -163,6 +163,10 @@ public class Indexer {
 
     public boolean Import(String path, ContactManager manager) {
         File file = new File(path);
+        if (!file.exists() || !file.isFile()) {
+            return false;
+        }
+
         String[] name = file.getName().split("-");
         String treeType = name[1].split("\\.")[0];
 
@@ -180,31 +184,32 @@ public class Indexer {
             return false;
         }
 
+        Comparator<Contact> comparator = getComparator(name[0]);
         if (treeType.equals("avl")) {
-                AVLTree<Contact> tree = new AVLTree<>(getComparator(name[0]));
-                for (String idx : idxs) {
-                    if (!idx.equals("null")) {
-                        tree.insert(manager.GetContact(Integer.parseInt(idx)));
-                    }
+            AVLTree<Contact> avl = new AVLTree<>(comparator);
+            for (String idx : idxs) {
+                if (!idx.equals("null")) {
+                    avl.insert(manager.GetContact(Integer.parseInt(idx)));
                 }
-            try {
-                avl_map.put(Contact.class.getField(name[0]), tree);
-            } catch (NoSuchFieldException e) {
-                return false;
             }
+
+            avl_map.put(name[0], avl);
             return true;
             } else if (treeType.equals("bst")) {
-                BSTree<Contact> tree = new BSTree<>(getComparator(name[0]));
+                BSTree<Contact> bst = new BSTree<>(comparator);
                 for (String idx : idxs) {
                     if (!idx.equals("null")) {
-                        tree.insert(manager.GetContact(Integer.parseInt(idx)));
+                        try {
+                            Contact found = manager.GetContactByID(Integer.parseInt(idx));
+                            bst.insert(found);
+                        } catch (NullPointerException e) {
+                            return false;
+                        }
                     }
                 }
-                try {
-                    bst_map.put(Contact.class.getField(name[0]), tree);
-                } catch (NoSuchFieldException e) {
-                    return false;
-                }
+
+                bst_map.put(name[0], bst);
+
                 return true;
             }
         return false;
